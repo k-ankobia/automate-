@@ -1,0 +1,78 @@
+function officecoderun() {
+  //Item name in the subject of message
+  var ITEM='Microsoft Office 365'
+  
+  //Sheet name with keys (Each item with specific keys)
+  var DATE_SHEET_NAME='Office'
+  
+  //Filtering message by sender and subject
+  var threads=GmailApp.search('from:ebay@ebay.co.uk is:unread subject:'+ITEM);
+  
+//  Logger.log(threads[0].getMessages()[0].getBody())
+//  return;
+  //Assign active spreadsheet
+  var ss=SpreadsheetApp.getActiveSpreadsheet();
+  
+  //Assign sheet
+  var sheet=ss.getSheetByName(DATE_SHEET_NAME);
+  
+  //Assign range of keys
+  var data=sheet.getRange('A2:D'+sheet.getLastRow()).getValues();
+  
+  var username;
+  var password;
+  var bool;
+  for(var i=0;i<threads.length;i++){
+      var messages=threads[i].getMessages();
+      //loop through each message in thread : m is number of message in thread start from 0
+      for(var m in messages){        
+              if(!messages[m].isUnread()) continue ;
+     
+              data=sheet.getRange('A2:D'+sheet.getLastRow()).getValues();
+              //Get email from email Body
+              var email=messages[m].getBody().match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi)[0];
+              //Logger.log(email);
+              //continue;
+              //Get Key hasn't used/sent 
+              //0 = username;1 = password;3 = Status 
+              for(var j in data){
+                  if(data[j][3]!='X' && data[j][0]!=''){
+                    username=data[j][0];
+                    password=data[j][1];
+                    bool=true;
+                    break;
+                  }
+              }
+              //If there's no key script Stop
+              if(!bool) return;
+              
+              //Send email
+              GmailApp.sendEmail(email,
+              "Microsoft OFfice 365",
+              "",
+              {'htmlBody':
+              "Thank you for your recent purchase. Every account is tested and confirmed to be working to ensure that all buyers are protected.<br><br>"+
+              "Account details are as follows:<br><br>"+
+              "Login at: <br><br>"+
+              "https://login.microsoftonline.com/<br><br>"+
+              "Username: "+username+"<br><br>"+
+              "Password: "+password+"<br><br>"+
+              "Upon your first login - you'll be requested to create a new password because this is the first time you are signing in.<br><br>"+
+              "Console for administration: https://portal.office.com/account/<br><br>"+
+              "You can install Office 2016 on up to 5 PCs or Macs, and on 5 tablets and 5 Smartphones + 1Tb of storage space in OneDrive.<br><br>"+
+              "We are a small business and would appreciate if you could leave positive feedback if you were happy with your purchase.<br><br>"+
+              "Kind Regards!"});
+              
+              bool=false;
+              
+              messages[m].markRead();
+            sheet.getRange(parseInt(j)+2, 4).setValue('X');
+            }
+            threads[i].markRead();
+          }
+          
+          //Move email ebay notification email to trash 
+          //threads[i].markRead();
+          
+          //Mark the key used
+}
